@@ -1,0 +1,407 @@
+# Facts (known symptoms)
+facts = [
+    "has_symptom(Patient, Fever)",
+    "has_symptom(Patient, Cough)"
+]
+
+# Rules: each rule is (premise_list, conclusion)
+rules = [
+    (["has_symptom(Patient, Fever)", "has_symptom(Patient, Cough)"], "has_disease(Patient, Flu)"),
+    (["has_disease(Patient, Flu)"], "treatment_for(Flu, Antiviral)")
+]
+
+# Inference function
+def infer(query, facts, rules):
+    inferred = set()
+    pending = [query]
+
+    while pending:
+        current = pending.pop()
+        if current in facts:
+            inferred.add(current)
+            continue
+
+        for premise, conclusion in rules:
+            if current == conclusion and all(p in inferred or p in facts for p in premise):
+                inferred.add(current)
+                pending.extend(premise)
+
+    return query in inferred
+
+# Queries
+diagnosis = infer("has_disease(Patient, Flu)", facts, rules)
+treatment = infer("treatment_for(Flu, Antiviral)", facts, rules)
+
+# Output
+print(f"Diagnosis for Patient: {'Flu' if diagnosis else 'Unknown'}")
+print(f"Recommended Treatment: {'Antiviral' if treatment else 'No Treatment Suggested'}")
+
+10
+
+
+# Define propositional variables as strings
+M = "MotionDetected"
+D = "DoorOpen"
+T = "TemperatureDrop"
+O = "OccupancyChange"
+N = "NewDevice"
+
+# Define rules as a dictionary: action -> condition
+rules = {
+    "LightsOn": M,          # If motion detected, turn on lights
+    "HeaterOn": T,          # If temperature drops, turn on heater
+    "SecurityAlert": D,     # If door/window open, trigger security alert
+    "UpdateOccupancy": O,   # If occupancy changes, update settings
+    "ConfigureDevice": N    # If new device added, configure it
+}
+
+# Function to infer actions based on sensor input
+def infer_actions(sensor_data):
+    actions = []
+    for action, condition in rules.items():
+        if condition in sensor_data:
+            actions.append(action)
+    return actions
+
+# Example sensor input (simulate)
+sensor_data = {M, T, O}  # Motion detected, temperature drop, occupancy change
+
+# Infer actions
+actions = infer_actions(sensor_data)
+
+print("Smart Home Actions Taken:", actions)
+
+
+
+
+9
+import random, math
+
+nodes = ["A", "B", "C", "D", "E"]
+net = [(random.choice(nodes), random.choice(nodes)) for _ in range(5)]
+
+T = 100
+while T > 0.1:
+    new_net = net[:]
+    i = random.randint(0, 4)
+    new_net[i] = (random.choice(nodes), random.choice(nodes))
+    
+    c1 = sum(abs(ord(a)-ord(b)) for a,b in net) / sum(ord(a)+ord(b) for a,b in net)
+    c2 = sum(abs(ord(a)-ord(b)) for a,b in new_net) / sum(ord(a)+ord(b) for a,b in new_net)
+    
+    if c2 < c1 or random.random() < math.exp(-(c2 - c1)/T):
+        net = new_net
+    
+    T *= 0.95
+
+print("Optimized:", net)
+
+8
+
+import random
+
+points = ["A", "B", "C", "D", "E", "F", "G", "H"]
+
+def fit(route):
+    return -sum(abs(ord(route[i]) - ord(route[i+1])) for i in range(len(route)-1))
+
+pop = [random.sample(points, len(points)) for _ in range(10)]
+
+for _ in range(50):
+    pop.sort(key=fit, reverse=True)
+    p1, p2 = pop[0], pop[1]
+
+    cut1, cut2 = sorted(random.sample(range(len(points)), 2))
+    c1 = p1[:cut1] + p2[cut1:cut2] + p1[cut2:]
+    c2 = p2[:cut1] + p1[cut1:cut2] + p2[cut2:]
+
+    for c in [c1, c2]:
+        i, j = random.sample(range(len(c)), 2)
+        c[i], c[j] = c[j], c[i]
+
+    pop[-2:] = [c1, c2]
+
+print("Best route:", pop[0])
+
+
+7
+Constants
+X = "X"
+O = "O"
+EMPTY = " "
+
+# 3x3 board
+board = [
+    [X, X, EMPTY],
+    [O, O, EMPTY],
+    [O, EMPTY, O]
+]
+
+# Check winner
+def winner(b):
+    lines = [
+        [b[0][0], b[0][1], b[0][2]],
+        [b[1][0], b[1][1], b[1][2]],
+        [b[2][0], b[2][1], b[2][2]],
+        [b[0][0], b[1][0], b[2][0]],
+        [b[0][1], b[1][1], b[2][1]],
+        [b[0][2], b[1][2], b[2][2]],
+        [b[0][0], b[1][1], b[2][2]],
+        [b[0][2], b[1][1], b[2][0]]
+    ]
+    for line in lines:
+        if line[0] == line[1] == line[2] != EMPTY:
+            return line[0]
+    return None
+
+# Check draw
+def draw(b):
+    for row in b:
+        for cell in row:
+            if cell == EMPTY:
+                return False
+    return True
+
+# Alpha-Beta Minimax
+def minimax(b, is_max, alpha, beta):
+    w = winner(b)
+    if w == X:
+        return 10
+    elif w == O:
+        return -10
+    elif draw(b):
+        return 0
+
+    if is_max:
+        best = -999
+        for i in range(3):
+            for j in range(3):
+                if b[i][j] == EMPTY:
+                    b[i][j] = X
+                    val = minimax(b, False, alpha, beta)
+                    b[i][j] = EMPTY
+                    if val > best:
+                        best = val
+                    if best > alpha:
+                        alpha = best
+                    if beta <= alpha:
+                        return best
+        return best
+    else:
+        best = 999
+        for i in range(3):
+            for j in range(3):
+                if b[i][j] == EMPTY:
+                    b[i][j] = O
+                    val = minimax(b, True, alpha, beta)
+                    b[i][j] = EMPTY
+                    if val < best:
+                        best = val
+                    if best < beta:
+                        beta = best
+                    if beta <= alpha:
+                        return best
+        return best
+
+# Find best move for X
+def find_best_move(b):
+    best_val = -999
+    move = (-1, -1)
+
+    for i in range(3):
+        for j in range(3):
+            if b[i][j] == EMPTY:
+                # Try the move
+                b[i][j] = X
+
+                # Get minimax value for this move
+                val = minimax(b, False, -999, 999)
+
+                # Undo the move
+                b[i][j] = EMPTY
+
+                # Check if this is the best move so far
+                if val > best_val:
+                    best_val = val
+                    move = (i, j)
+
+    return move
+
+# Output
+best = find_best_move(board)
+print("Best move for X:", best)
+
+
+
+# 5
+import heapq
+
+# Map with terrain types
+grid = [
+    ['O', 'O', 'M', 'O', 'E'],
+    ['O', 'U', 'O', 'D', 'O'],
+    ['O', 'O', 'O', 'O', 'O'],
+    ['E', 'M', 'O', 'W', 'O'],
+    ['O', 'O', 'D', 'O', 'G']
+]
+
+# Terrain cost
+costs = {
+    'O': 1,  # Open
+    'M': 5,  # Mountain
+    'U': 3,  # Urban
+    'W': float('inf'),  # Water (blocked)
+    'E': 10,  # Enemy
+    'D': 7,  # Defense
+    'G': 1   # Goal
+}
+
+# 4 directions: up, down, left, right
+moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+# Manhattan distance
+def heuristic(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+# A* algorithm
+def astar(start, goal):
+    rows, cols = len(grid), len(grid[0])
+    open_list = []
+    heapq.heappush(open_list, (0, start))
+    came_from = {}
+    cost_so_far = {start: 0}
+
+    while open_list:
+        _, current = heapq.heappop(open_list)
+
+        if current == goal:
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
+            path.append(start)
+            return path[::-1]
+
+        for move in moves:
+            r, c = current[0] + move[0], current[1] + move[1]
+            if 0 <= r < rows and 0 <= c < cols:
+                new_cost = cost_so_far[current] + costs[grid[r][c]]
+                if (r, c) not in cost_so_far or new_cost < cost_so_far[(r, c)]:
+                    cost_so_far[(r, c)] = new_cost
+                    priority = new_cost + heuristic((r, c), goal)
+                    heapq.heappush(open_list, (priority, (r, c)))
+                    came_from[(r, c)] = current
+
+    return "No path found"
+
+# Starting and Goal positions
+start = (0, 0)
+goal = (4, 4)
+
+# Run A* search
+path = astar(start, goal)
+print("Path:", path)
+
+
+4
+from collections import deque
+
+maze = [
+    ['P', '.', '.', '#', 'G'],
+    ['#', '#', '.', '#', '.'],
+    ['.', '.', '.', '.', '.'],
+    ['G', '#', '.', '#', 'E'],
+    ['.', '.', 'G', '.', '.']
+]
+
+moves = [(-1,0), (1,0), (0,-1), (0,1)]
+
+def bfs(maze):
+    for i in range(5):
+        for j in range(5):
+            if maze[i][j] == 'P':
+                start = (i, j)
+    q = deque([(start, [start])])
+    visited = {start}
+    while q:
+        (r, c), path = q.popleft()
+        if maze[r][c] == 'E': return path
+        for dr, dc in moves:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < 5 and 0 <= nc < 5 and (nr, nc) not in visited:
+                if maze[nr][nc] not in ['#', 'G']:
+                    q.append(((nr, nc), path + [(nr, nc)]))
+                    visited.add((nr, nc))
+    return "No path"
+
+print("Shortest Path:", bfs(maze))
+
+
+3
+
+
+n_queens(N, Solution) :-
+    range(1, N, Ns),
+    permutation(Ns, Solution),
+    safe(Solution).
+
+range(N, N, [N]).
+range(I, N, [I|R]) :-
+    I < N,
+    I1 is I + 1,
+    range(I1, N, R).
+
+safe([]).
+safe([Q|Qs]) :-
+    safe(Qs),
+    no_attack(Q, Qs, 1).
+
+no_attack(_, [], _).
+no_attack(Q, [Q1|Qs], D) :-
+    Q =\= Q1 + D,
+    Q =\= Q1 - D,
+    D1 is D + 1,
+    no_attack(Q, Qs, D1).
+
+
+
+2
+dist(a,b,10). 
+dist(b,a,10).
+dist(a,c,15). 
+dist(c,a,15).
+dist(b,c,35). 
+dist(c,b,35).
+
+cost([_],0).
+cost([X,Y|T],C):- 
+    dist(X,Y,D), 
+    cost([Y|T],C1), 
+    C is D+C1.
+
+tsp(Path, Cost):- 
+    permutation([a,b,c], Path), 
+    cost(Path, Cost).
+
+
+prolog
+
+greatest :-
+    write('Enter 3 numbers: '), read(A), read(B), read(C),
+    (A >= B, A >= C -> Max = A ;
+     B >= A, B >= C -> Max = B ;
+     Max = C),
+    write('Greatest is: '), write(Max).
+
+
+goat:-
+    write('Enter the 3 number: '), read(A), read(B), read(C),
+    Max is max(A, max(B, C)),
+    write('greatest of 3 number is : '), write(Max).
+
+
+sum :-
+    write('Enter 1st number: '), read(X),
+    write('Enter 2nd number: '), read(Y),
+    Z is X + Y,
+    write('sum of two number: '), write(Z).
